@@ -1,31 +1,6 @@
 ---
-// Header component - will be enhanced in future issues
+import HeaderNavigation from '../react/HeaderNavigation';
 ---
 
-<header class="bg-white shadow-sm">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center py-4">
-      <div class="flex items-center">
-        <a href="/" class="text-xl font-bold text-gray-900">
-          Webler
-        </a>
-      </div>
-
-      <nav class="hidden md:flex space-x-8">
-        <a href="#how-it-works" class="text-gray-600 hover:text-gray-900">How It Works</a>
-        <a href="#showcase" class="text-gray-600 hover:text-gray-900">Showcase</a>
-        <a href="/pricing" class="text-gray-600 hover:text-gray-900">Pricing</a>
-        <a href="#add-ons" class="text-gray-600 hover:text-gray-900">Add-ons</a>
-      </nav>
-
-      <div class="flex items-center">
-        <a
-          href="#start"
-          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Start with Webler
-        </a>
-      </div>
-    </div>
-  </div>
-</header>
+<!-- Enhanced Header with React island for interactive features -->
+<HeaderNavigation client:load />
