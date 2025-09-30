@@ -49,7 +49,7 @@ export default function HeaderNavigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle smooth scrolling
+  // Handle smooth scrolling and cross-page navigation
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
       e.preventDefault();
@@ -57,6 +57,7 @@ export default function HeaderNavigation() {
       const targetElement = document.getElementById(targetId);
 
       if (targetElement) {
+        // Section exists on current page - smooth scroll to it
         const headerHeight = 80; // Account for sticky header
         const targetPosition = targetElement.offsetTop - headerHeight;
 
@@ -64,6 +65,14 @@ export default function HeaderNavigation() {
           top: targetPosition,
           behavior: 'smooth'
         });
+      } else {
+        // Section doesn't exist on current page - navigate to landing page
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/') {
+          // We're not on the landing page, so navigate there with the anchor
+          window.location.href = `/${href}`;
+        }
+        // If we're already on landing page but section doesn't exist, do nothing
       }
 
       // Close mobile menu if open
