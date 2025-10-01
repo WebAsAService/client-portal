@@ -19,6 +19,12 @@ export default function HeaderNavigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
 
+  // Mobile menu toggle with debug logging
+  const toggleMobileMenu = () => {
+    console.log('Mobile menu toggle clicked, current state:', isMenuOpen);
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   // Handle scroll effects
   useEffect(() => {
     const handleScroll = () => {
@@ -169,10 +175,12 @@ export default function HeaderNavigation() {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={toggleMobileMenu}
+              onTouchStart={() => {}} // Enable touch events on iOS
               className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors mobile-menu-container"
               aria-label="Toggle menu"
               aria-expanded={isMenuOpen}
+              type="button"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -201,8 +209,10 @@ export default function HeaderNavigation() {
                 <span className="text-lg font-semibold text-gray-900">Menu</span>
                 <button
                   onClick={() => setIsMenuOpen(false)}
+                  onTouchStart={() => {}} // Enable touch events on iOS
                   className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                   aria-label="Close menu"
+                  type="button"
                 >
                   <X className="h-5 w-5" />
                 </button>
