@@ -19,5 +19,8 @@
     "react-dom": "^19.1.1",
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.13"
+  },
+  "devDependencies": {
+    "netlify-cli": "^23.8.1"
   }
 }
