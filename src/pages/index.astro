@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import GeneratorForm from '../components/react/GeneratorForm';
 ---
 
 <Layout
@@ -577,6 +578,23 @@ import Layout from '../layouts/Layout.astro';
           as specified in the upcoming development phases.
         </p>
       </div>
+    </div>
+  </section>
+
+  <!-- Website Generation Form Section -->
+  <section id="generate" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          Tell us about your business
+        </h2>
+        <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+          Answer a few questions and we'll generate your professional website in minutes.
+        </p>
+      </div>
+
+      <!-- React Form Component -->
+      <GeneratorForm client:load />
     </div>
   </section>
 </Layout>
