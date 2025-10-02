@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProgressTracker from '../components/react/ProgressTracker';
+
+// Demo page for testing the ProgressTracker component
+const pageTitle = 'Progress Tracker Demo | Webler';
+const pageDescription = 'Test the real-time progress tracking component for website generation.';
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <main class="min-h-screen bg-gray-50 py-12">
+    <!-- Demo Header -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          Progress Tracker Demo
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Test the real-time progress tracking component that shows live updates during website generation.
+        </p>
+      </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Demo Controls</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            id="demo-start"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Start Generation
+          </button>
+          <button
+            id="demo-simulate"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Simulate Progress
+          </button>
+          <button
+            id="demo-error"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Simulate Error
+          </button>
+        </div>
+        <p class="text-sm text-gray-500 mt-4">
+          <strong>Note:</strong> This is a demo page. In production, the WebSocket server would be running to provide real-time updates.
+        </p>
+      </div>
+    </div>
+
+    <!-- Progress Tracker Component -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <ProgressTracker
+        clientId="demo-client-123"
+        client:load
+      />
+    </div>
+
+    <!-- Demo Information -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">
+          Component Features
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">Real-time Updates</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• WebSocket connection for live progress</li>
+              <li>• Automatic reconnection on disconnect</li>
+              <li>• Fallback to polling if WebSocket fails</li>
+              <li>• Connection status indicators</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">User Experience</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Smooth animated progress bar</li>
+              <li>• Step-by-step visual indicators</li>
+              <li>• Estimated time remaining</li>
+              <li>• Success celebration animation</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">Error Handling</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Clear error messages</li>
+              <li>• Retry functionality</li>
+              <li>• Connection issue warnings</li>
+              <li>• Graceful degradation</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">Technical</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• TypeScript for type safety</li>
+              <li>• React hooks for state management</li>
+              <li>• Mobile-responsive design</li>
+              <li>• Accessible UI components</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Demo functionality to simulate progress updates
+  document.addEventListener('DOMContentLoaded', () => {
+    const startBtn = document.getElementById('demo-start');
+    const simulateBtn = document.getElementById('demo-simulate');
+    const errorBtn = document.getElementById('demo-error');
+
+    // Simulate starting generation
+    startBtn?.addEventListener('click', () => {
+      // This would trigger the actual generation process
+      console.log('Demo: Starting generation process...');
+      alert('In production, this would start the actual website generation process.');
+    });
+
+    // Simulate progress updates
+    simulateBtn?.addEventListener('click', () => {
+      console.log('Demo: Simulating progress updates...');
+      alert('Demo mode: Progress simulation would require a WebSocket server. This component is ready for real-time updates when connected to the backend.');
+    });
+
+    // Simulate error
+    errorBtn?.addEventListener('click', () => {
+      console.log('Demo: Simulating error state...');
+      alert('Demo mode: Error simulation would be handled by the WebSocket server in production.');
+    });
+  });
+</script>
