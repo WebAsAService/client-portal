@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Upload, X, Check } from 'lucide-react';
+import ProgressTracker from './ProgressTracker';
 
 // TypeScript interfaces
 interface FormData {
@@ -170,6 +171,8 @@ export default function GeneratorForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [clientId, setClientId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentQuestion = questions[currentStep];
@@ -257,19 +260,23 @@ export default function GeneratorForm() {
     setIsSubmitting(true);
 
     try {
+      // Generate unique client ID for this generation session
+      const newClientId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
       // Here you would typically send the data to your API
       console.log('Form submitted:', formData);
+      console.log('Generated client ID:', newClientId);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate API call to initiate generation
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Redirect to generation flow (or show success message)
-      alert('Great! Your Webler is being generated. Preview the draft now.');
+      // Transition to progress tracking
+      setClientId(newClientId);
+      setIsGenerating(true);
 
     } catch (error) {
       console.error('Submission error:', error);
       alert('Something went wrong. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -287,6 +294,39 @@ export default function GeneratorForm() {
   const getCurrentValue = () => {
     return formData[currentQuestion.id];
   };
+
+  // Handle generation completion
+  const handleGenerationComplete = (previewUrl: string) => {
+    console.log('Generation completed!', previewUrl);
+    // In a real app, you might redirect to the preview or show a success modal
+  };
+
+  // Handle generation error
+  const handleGenerationError = (error: string) => {
+    console.error('Generation failed:', error);
+    // Allow user to go back to form or retry
+    setIsGenerating(false);
+    setClientId(null);
+    setIsSubmitting(false);
+  };
+
+  // Handle retry - go back to form
+  const handleRetry = () => {
+    setIsGenerating(false);
+    setClientId(null);
+    setIsSubmitting(false);
+  };
+
+  // Show progress tracker if generation is in progress
+  if (isGenerating && clientId) {
+    return (
+      <ProgressTracker
+        clientId={clientId}
+        onComplete={handleGenerationComplete}
+        onError={handleGenerationError}
+      />
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
