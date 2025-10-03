@@ -1,0 +1,191 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Demo page for testing the WebSocket hooks and utilities
+const pageTitle = 'WebSocket Hooks Demo | Webler';
+const pageDescription = 'Test the reusable WebSocket hooks and utilities for generation progress tracking.';
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <main class="min-h-screen bg-gray-50 py-12">
+    <!-- Demo Header -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          WebSocket Hooks Demo
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Test the reusable WebSocket hooks and utilities for consistent WebSocket management across the application.
+        </p>
+      </div>
+    </div>
+
+    <!-- Demo Information -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">WebSocket Architecture</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <h3 class="font-medium text-gray-800 mb-2">🛠️ Utilities (websocket.ts)</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li>• Socket configuration and event constants</li>
+              <li>• TypeScript interfaces and type guards</li>
+              <li>• Progress calculation utilities</li>
+              <li>• Error handling and logging helpers</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="font-medium text-gray-800 mb-2">🔗 Base Hook (useWebSocket)</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li>• Connection state management</li>
+              <li>• Automatic reconnection with backoff</li>
+              <li>• Type-safe event handling</li>
+              <li>• Room management and cleanup</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="font-medium text-gray-800 mb-2">📊 Specialized Hook (useGenerationProgress)</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li>• Generation-specific progress tracking</li>
+              <li>• Step status management</li>
+              <li>• Auto-join and status recovery</li>
+              <li>• Progress calculation and callbacks</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Documentation -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">
+          WebSocket Utilities Features
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">⚙️ Configuration Management</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Environment-based socket URL configuration</li>
+              <li>• Comprehensive socket options with defaults</li>
+              <li>• Event constants for type safety</li>
+              <li>• Debug logging with conditional output</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">🔄 Connection Management</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Automatic reconnection with exponential backoff</li>
+              <li>• Connection state tracking and error handling</li>
+              <li>• Graceful degradation and error recovery</li>
+              <li>• Proper cleanup and memory management</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">📡 Event Handling</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Type-safe event emission and listening</li>
+              <li>• Event payload validation with type guards</li>
+              <li>• Room-based message routing</li>
+              <li>• Callback-based event handling</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-800 mb-2">📊 Progress Utilities</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Step-based progress calculation</li>
+              <li>• Weighted progress with configurable steps</li>
+              <li>• Time estimation based on current progress</li>
+              <li>• Step transition and validation logic</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hook Usage Examples -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-green-900 mb-3">
+          Hook Usage Examples
+        </h3>
+        <div class="grid grid-cols-1 gap-6">
+          <div>
+            <h4 class="font-medium text-green-800 mb-2">useWebSocket Hook</h4>
+            <div class="bg-white p-4 rounded border text-sm font-mono">
+              <code class="text-green-700">
+                const { isConnected, emit, on, off } = useWebSocket({<br>
+                &nbsp;&nbsp;autoConnect: true,<br>
+                &nbsp;&nbsp;reconnection: true,<br>
+                &nbsp;&nbsp;debug: true<br>
+                });
+              </code>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-medium text-green-800 mb-2">useGenerationProgress Hook</h4>
+            <div class="bg-white p-4 rounded border text-sm font-mono">
+              <code class="text-green-700">
+                const { progressState, isGenerating, startGeneration } = useGenerationProgress({<br>
+                &nbsp;&nbsp;clientId: 'client-123',<br>
+                &nbsp;&nbsp;businessName: 'Acme Corp',<br>
+                &nbsp;&nbsp;onComplete: (data) => console.log('Done!', data.previewUrl)<br>
+                });
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical Implementation -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-gray-100 border border-gray-300 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+          Technical Implementation
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">🎯 Key Benefits</h4>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li>• Consistent WebSocket management across components</li>
+              <li>• Reusable connection logic with error handling</li>
+              <li>• Type-safe event handling and payload validation</li>
+              <li>• Centralized configuration and debugging</li>
+              <li>• Memory-efficient with proper cleanup</li>
+              <li>• Specialized hooks for specific use cases</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">🔧 Implementation Details</h4>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li>• Built on Socket.IO client library</li>
+              <li>• React hooks with proper dependency management</li>
+              <li>• TypeScript for complete type safety</li>
+              <li>• Exponential backoff for reconnection</li>
+              <li>• Event-driven architecture with callbacks</li>
+              <li>• Environment-aware configuration</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">📦 Files Created</h4>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li>• <code>src/utils/websocket.ts</code> - Core utilities</li>
+              <li>• <code>src/hooks/useWebSocket.ts</code> - Base hook</li>
+              <li>• <code>src/hooks/useGenerationProgress.ts</code> - Specialized hook</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">🚀 Usage in Components</h4>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li>• ProgressTracker can be refactored to use hooks</li>
+              <li>• Future components can reuse connection logic</li>
+              <li>• Consistent error handling across app</li>
+              <li>• Easy testing with mock implementations</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
