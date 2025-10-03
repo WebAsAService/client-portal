@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { io, type Socket } from 'socket.io-client';
+import React, { useState, useCallback } from 'react';
+import { QueryProvider } from '../../providers/QueryProvider';
+import { useGenerationStatus } from '../../hooks/useApiClient';
 import PreviewReady from './PreviewReady';
 import {
   Upload,
@@ -23,23 +24,8 @@ interface ProgressStep {
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
 }
 
-interface ProgressState {
-  clientId: string;
-  status: 'starting' | 'in-progress' | 'completed' | 'error';
-  progress: number;
-  message: string;
-  currentStep: string;
-  steps: {
-    uploadLogo: 'pending' | 'in-progress' | 'completed' | 'failed';
-    analyzeLogo: 'pending' | 'in-progress' | 'completed' | 'failed';
-    generateTheme: 'pending' | 'in-progress' | 'completed' | 'failed';
-    createRepo: 'pending' | 'in-progress' | 'completed' | 'failed';
-    deployPreview: 'pending' | 'in-progress' | 'completed' | 'failed';
-  };
-  previewUrl?: string;
-  error?: string;
-  estimatedTimeRemaining?: number;
-}
+// Import the interface from our API client
+import type { GenerationStatus } from '../../utils/api';
 
 interface ProgressTrackerProps {
   clientId: string;
@@ -49,16 +35,29 @@ interface ProgressTrackerProps {
   onError?: (error: string) => void;
 }
 
-export default function ProgressTracker({
+// Internal component that uses the hook
+function ProgressTrackerInternal({
   clientId,
   businessName,
   showPreviewReady = true,
   onComplete,
   onError
 }: ProgressTrackerProps) {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [progressState, setProgressState] = useState<ProgressState>({
+  // Use our new HTTP + TanStack Query hook
+  const { data: progressState, isLoading, error, isFetching } = useGenerationStatus(
+    clientId,
+    {
+      onComplete: (data) => {
+        onComplete?.(data.previewUrl || '');
+      },
+      onError: (err) => {
+        onError?.(err.message);
+      }
+    }
+  );
+
+  // Default state when no data is available yet
+  const defaultState: GenerationStatus = {
     clientId,
     status: 'starting',
     progress: 0,
@@ -71,9 +70,9 @@ export default function ProgressTracker({
       createRepo: 'pending',
       deployPreview: 'pending'
     }
-  });
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  };
+
+  const currentState = progressState || defaultState;
 
   // Define the progress steps
   const steps: ProgressStep[] = [
@@ -82,157 +81,44 @@ export default function ProgressTracker({
       name: 'Uploading',
       description: 'Uploading and optimizing your logo...',
       icon: Upload,
-      status: progressState.steps.uploadLogo
+      status: currentState.steps.uploadLogo
     },
     {
       id: 'analyzeLogo',
       name: 'Analyzing',
       description: 'AI analyzing your logo colors...',
       icon: Brain,
-      status: progressState.steps.analyzeLogo
+      status: currentState.steps.analyzeLogo
     },
     {
       id: 'generateTheme',
       name: 'Generating',
       description: 'Generating custom theme and content...',
       icon: Wand2,
-      status: progressState.steps.generateTheme
+      status: currentState.steps.generateTheme
     },
     {
       id: 'createRepo',
       name: 'Creating',
       description: 'Creating your website repository...',
       icon: FolderGit2,
-      status: progressState.steps.createRepo
+      status: currentState.steps.createRepo
     },
     {
       id: 'deployPreview',
       name: 'Deploying',
       description: 'Deploying preview website...',
       icon: Rocket,
-      status: progressState.steps.deployPreview
+      status: currentState.steps.deployPreview
     }
   ];
 
-  // Initialize WebSocket connection
-  const initializeSocket = useCallback(() => {
-    try {
-      setConnectionError(null);
-      setIsReconnecting(true);
-
-      // For development, use localhost. In production, use the actual server URL
-      const socketUrl = process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3001'
-        : 'wss://api.webler.io';
-
-      const newSocket = io(socketUrl, {
-        autoConnect: true,
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        timeout: 20000
-      });
-
-      // Connection event handlers
-      newSocket.on('connect', () => {
-        console.log('✅ WebSocket connected');
-        setIsConnected(true);
-        setIsReconnecting(false);
-        setConnectionError(null);
-
-        // Join the generation room for this client
-        newSocket.emit('join-generation', { clientId });
-      });
-
-      newSocket.on('disconnect', () => {
-        console.log('❌ WebSocket disconnected');
-        setIsConnected(false);
-      });
-
-      newSocket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-        setConnectionError('Unable to connect to progress server');
-        setIsReconnecting(false);
-      });
-
-      // Progress update handlers
-      newSocket.on('generation-update', (data: Partial<ProgressState>) => {
-        console.log('📊 Progress update:', data);
-        setProgressState(prev => ({ ...prev, ...data }));
-      });
-
-      newSocket.on('generation-complete', (data: { previewUrl: string }) => {
-        console.log('🎉 Generation complete:', data);
-        setProgressState(prev => ({
-          ...prev,
-          status: 'completed',
-          progress: 100,
-          message: '🎉 Your website is ready!',
-          previewUrl: data.previewUrl
-        }));
-        onComplete?.(data.previewUrl);
-      });
-
-      newSocket.on('generation-error', (data: { error: string }) => {
-        console.error('❌ Generation error:', data);
-        setProgressState(prev => ({
-          ...prev,
-          status: 'error',
-          error: data.error,
-          message: 'An error occurred during generation'
-        }));
-        onError?.(data.error);
-      });
-
-      setSocket(newSocket);
-
-    } catch (error) {
-      console.error('Failed to initialize socket:', error);
-      setConnectionError('Failed to initialize connection');
-      setIsReconnecting(false);
-    }
-  }, [clientId, onComplete, onError]);
-
-  // Initialize socket on mount
-  useEffect(() => {
-    initializeSocket();
-
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, [initializeSocket]);
-
-  // Fallback polling when WebSocket is not available
-  useEffect(() => {
-    if (!isConnected && !isReconnecting && connectionError) {
-      console.log('🔄 Falling back to polling...');
-
-      const pollInterval = setInterval(async () => {
-        try {
-          // Simulate polling - in real implementation, this would be an HTTP endpoint
-          const response = await fetch(`/api/generation-status/${clientId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setProgressState(prev => ({ ...prev, ...data }));
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-        }
-      }, 2000);
-
-      return () => clearInterval(pollInterval);
-    }
-  }, [isConnected, isReconnecting, connectionError, clientId]);
-
-  // Retry connection
+  // Retry handler for HTTP approach
   const handleRetry = useCallback(() => {
-    if (socket) {
-      socket.disconnect();
-    }
-    initializeSocket();
-  }, [socket, initializeSocket]);
+    // In the HTTP approach, TanStack Query handles retries automatically
+    // This could trigger a manual refetch if needed
+    console.log('Retry triggered - TanStack Query will handle automatic retries');
+  }, []);
 
   // Format time remaining
   const formatTimeRemaining = (seconds: number): string => {
@@ -261,8 +147,8 @@ export default function ProgressTracker({
 
   // Get progress bar color
   const getProgressColor = () => {
-    if (progressState.status === 'error') return 'bg-red-500';
-    if (progressState.status === 'completed') return 'bg-green-500';
+    if (currentState.status === 'error') return 'bg-red-500';
+    if (currentState.status === 'completed') return 'bg-green-500';
     return 'bg-blue-500';
   };
 
@@ -276,20 +162,16 @@ export default function ProgressTracker({
 
         {/* Connection Status */}
         <div className="flex items-center justify-center space-x-2 mb-4">
-          {isConnected ? (
+          {!error ? (
             <div className="flex items-center text-green-600 text-sm">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-              Live updates active
-            </div>
-          ) : connectionError ? (
-            <div className="flex items-center text-orange-600 text-sm">
-              <WifiOff className="w-4 h-4 mr-2" />
-              Using fallback mode
+              HTTP polling active
+              {isFetching && <span className="ml-1">(updating...)</span>}
             </div>
           ) : (
-            <div className="flex items-center text-blue-600 text-sm">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-              Connecting...
+            <div className="flex items-center text-orange-600 text-sm">
+              <WifiOff className="w-4 h-4 mr-2" />
+              Connection error
             </div>
           )}
         </div>
@@ -298,11 +180,11 @@ export default function ProgressTracker({
       {/* Current Status Message */}
       <div className="text-center mb-6">
         <p className="text-lg font-medium text-gray-700 mb-2">
-          {progressState.message}
+          {currentState.message}
         </p>
-        {progressState.estimatedTimeRemaining && progressState.status === 'in-progress' && (
+        {currentState.estimatedTimeRemaining && currentState.status === 'in-progress' && (
           <p className="text-sm text-gray-500">
-            Estimated time remaining: {formatTimeRemaining(progressState.estimatedTimeRemaining)}
+            Estimated time remaining: {formatTimeRemaining(currentState.estimatedTimeRemaining)}
           </p>
         )}
       </div>
@@ -312,13 +194,13 @@ export default function ProgressTracker({
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">Progress</span>
           <span className="text-sm font-medium text-gray-700">
-            {Math.round(progressState.progress)}%
+            {Math.round(currentState.progress)}%
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
             className={`h-3 rounded-full transition-all duration-500 ease-out ${getProgressColor()}`}
-            style={{ width: `${progressState.progress}%` }}
+            style={{ width: `${currentState.progress}%` }}
           />
         </div>
       </div>
@@ -355,14 +237,14 @@ export default function ProgressTracker({
       </div>
 
       {/* Error State */}
-      {progressState.status === 'error' && (
+      {(currentState.status === 'error' || error) && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div className="flex items-center">
             <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
             <div className="flex-grow">
               <h3 className="font-medium text-red-800">Generation Failed</h3>
               <p className="text-sm text-red-600 mt-1">
-                {progressState.error || 'An unexpected error occurred during website generation.'}
+                {currentState.error || error?.message || 'An unexpected error occurred during website generation.'}
               </p>
             </div>
           </div>
@@ -379,11 +261,11 @@ export default function ProgressTracker({
       )}
 
       {/* Success State */}
-      {progressState.status === 'completed' && progressState.previewUrl && (
+      {currentState.status === 'completed' && currentState.previewUrl && (
         showPreviewReady ? (
           <PreviewReady
             clientId={clientId}
-            previewUrl={progressState.previewUrl}
+            previewUrl={currentState.previewUrl}
             businessName={businessName || 'Your Business'}
             generatedAt={new Date().toISOString()}
           />
@@ -401,7 +283,7 @@ export default function ProgressTracker({
               Your custom website has been generated and deployed successfully.
             </p>
             <a
-              href={progressState.previewUrl}
+              href={currentState.previewUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
@@ -414,7 +296,7 @@ export default function ProgressTracker({
       )}
 
       {/* Connection Issues */}
-      {connectionError && !isReconnecting && (
+      {error && !isLoading && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -422,7 +304,7 @@ export default function ProgressTracker({
               <div>
                 <h3 className="font-medium text-orange-800">Connection Issue</h3>
                 <p className="text-sm text-orange-600">
-                  {connectionError}. Updates may be delayed.
+                  Unable to get status updates. TanStack Query will retry automatically.
                 </p>
               </div>
             </div>
@@ -436,5 +318,14 @@ export default function ProgressTracker({
         </div>
       )}
     </div>
+  );
+}
+
+// Main component with QueryProvider wrapper
+export default function ProgressTracker(props: ProgressTrackerProps) {
+  return (
+    <QueryProvider>
+      <ProgressTrackerInternal {...props} />
+    </QueryProvider>
   );
 }
