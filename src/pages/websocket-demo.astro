@@ -114,11 +114,11 @@ const pageDescription = 'Test the reusable WebSocket hooks and utilities for gen
             <h4 class="font-medium text-green-800 mb-2">useWebSocket Hook</h4>
             <div class="bg-white p-4 rounded border text-sm font-mono">
               <code class="text-green-700">
-                const { isConnected, emit, on, off } = useWebSocket({<br>
-                &nbsp;&nbsp;autoConnect: true,<br>
-                &nbsp;&nbsp;reconnection: true,<br>
-                &nbsp;&nbsp;debug: true<br>
-                });
+                const &#123; isConnected, emit, on, off &#125; = useWebSocket(&#123;<br/>
+                &nbsp;&nbsp;autoConnect: true,<br/>
+                &nbsp;&nbsp;reconnection: true,<br/>
+                &nbsp;&nbsp;debug: true<br/>
+                &#125;);
               </code>
             </div>
           </div>
@@ -126,11 +126,11 @@ const pageDescription = 'Test the reusable WebSocket hooks and utilities for gen
             <h4 class="font-medium text-green-800 mb-2">useGenerationProgress Hook</h4>
             <div class="bg-white p-4 rounded border text-sm font-mono">
               <code class="text-green-700">
-                const { progressState, isGenerating, startGeneration } = useGenerationProgress({<br>
-                &nbsp;&nbsp;clientId: 'client-123',<br>
-                &nbsp;&nbsp;businessName: 'Acme Corp',<br>
-                &nbsp;&nbsp;onComplete: (data) => console.log('Done!', data.previewUrl)<br>
-                });
+                const &#123; progressState, isGenerating, startGeneration &#125; = useGenerationProgress(&#123;<br/>
+                &nbsp;&nbsp;clientId: 'client-123',<br/>
+                &nbsp;&nbsp;businessName: 'Acme Corp',<br/>
+                &nbsp;&nbsp;onComplete: (data) =&gt; console.log('Done!', data.previewUrl)<br/>
+                &#125;);
               </code>
             </div>
           </div>
