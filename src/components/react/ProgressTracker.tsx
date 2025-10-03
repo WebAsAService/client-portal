@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { io, type Socket } from 'socket.io-client';
+import PreviewReady from './PreviewReady';
 import {
   Upload,
   Brain,
@@ -42,12 +43,16 @@ interface ProgressState {
 
 interface ProgressTrackerProps {
   clientId: string;
+  businessName?: string;
+  showPreviewReady?: boolean;
   onComplete?: (previewUrl: string) => void;
   onError?: (error: string) => void;
 }
 
 export default function ProgressTracker({
   clientId,
+  businessName,
+  showPreviewReady = true,
   onComplete,
   onError
 }: ProgressTrackerProps) {
@@ -375,28 +380,37 @@ export default function ProgressTracker({
 
       {/* Success State */}
       {progressState.status === 'completed' && progressState.previewUrl && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-500" />
+        showPreviewReady ? (
+          <PreviewReady
+            clientId={clientId}
+            previewUrl={progressState.previewUrl}
+            businessName={businessName || 'Your Business'}
+            generatedAt={new Date().toISOString()}
+          />
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
             </div>
+            <h3 className="text-xl font-bold text-green-800 mb-2">
+              🎉 Your Website is Ready!
+            </h3>
+            <p className="text-green-700 mb-6">
+              Your custom website has been generated and deployed successfully.
+            </p>
+            <a
+              href={progressState.previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5 mr-2" />
+              View Your Website
+            </a>
           </div>
-          <h3 className="text-xl font-bold text-green-800 mb-2">
-            🎉 Your Website is Ready!
-          </h3>
-          <p className="text-green-700 mb-6">
-            Your custom website has been generated and deployed successfully.
-          </p>
-          <a
-            href={progressState.previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <ExternalLink className="w-5 h-5 mr-2" />
-            View Your Website
-          </a>
-        </div>
+        )
       )}
 
       {/* Connection Issues */}
