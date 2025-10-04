@@ -16,7 +16,7 @@ const pageDescription = 'Test the real-time progress tracking component for webs
           Progress Tracker Demo
         </h1>
         <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-          Test the real-time progress tracking component that shows live updates during website generation.
+          Test the HTTP polling progress tracking component that shows updates during website generation.
         </p>
       </div>
     </div>
@@ -46,7 +46,7 @@ const pageDescription = 'Test the real-time progress tracking component for webs
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-4">
-          <strong>Note:</strong> This is a demo page. In production, the WebSocket server would be running to provide real-time updates.
+          <strong>Note:</strong> This is a demo page. In production, the HTTP API server would be running to provide status updates.
         </p>
       </div>
     </div>
@@ -67,11 +67,11 @@ const pageDescription = 'Test the real-time progress tracking component for webs
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 class="font-medium text-blue-800 mb-2">Real-time Updates</h4>
+            <h4 class="font-medium text-blue-800 mb-2">HTTP Polling Updates</h4>
             <ul class="text-sm text-blue-700 space-y-1">
-              <li>• WebSocket connection for live progress</li>
-              <li>• Automatic reconnection on disconnect</li>
-              <li>• Fallback to polling if WebSocket fails</li>
+              <li>• HTTP polling with TanStack Query</li>
+              <li>• Automatic retry with exponential backoff</li>
+              <li>• Smart caching and background updates</li>
               <li>• Connection status indicators</li>
             </ul>
           </div>
@@ -97,7 +97,7 @@ const pageDescription = 'Test the real-time progress tracking component for webs
             <h4 class="font-medium text-blue-800 mb-2">Technical</h4>
             <ul class="text-sm text-blue-700 space-y-1">
               <li>• TypeScript for type safety</li>
-              <li>• React hooks for state management</li>
+              <li>• TanStack Query for state management</li>
               <li>• Mobile-responsive design</li>
               <li>• Accessible UI components</li>
             </ul>
@@ -125,13 +125,13 @@ const pageDescription = 'Test the real-time progress tracking component for webs
     // Simulate progress updates
     simulateBtn?.addEventListener('click', () => {
       console.log('Demo: Simulating progress updates...');
-      alert('Demo mode: Progress simulation would require a WebSocket server. This component is ready for real-time updates when connected to the backend.');
+      alert('Demo mode: Progress simulation would require an HTTP API server. This component is ready for polling updates when connected to the backend.');
     });
 
     // Simulate error
     errorBtn?.addEventListener('click', () => {
       console.log('Demo: Simulating error state...');
-      alert('Demo mode: Error simulation would be handled by the WebSocket server in production.');
+      alert('Demo mode: Error simulation would be handled by the HTTP API server in production.');
     });
   });
 </script>
