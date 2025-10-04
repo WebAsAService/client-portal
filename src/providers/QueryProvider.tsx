@@ -6,8 +6,8 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 
 interface QueryProviderProps {
   children: ReactNode;
@@ -48,13 +48,7 @@ export const QueryProvider = ({ children }: QueryProviderProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {/* Show dev tools only in development */}
-      {import.meta.env.MODE === 'development' && (
-        <ReactQueryDevtools
-          initialIsOpen={false}
-          buttonPosition="bottom-right"
-        />
-      )}
+      {/* Dev tools can be added back later if needed */}
     </QueryClientProvider>
   );
 };
