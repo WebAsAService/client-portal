@@ -12,6 +12,10 @@ import {
   useGenerationWorkflow,
   type GenerateWebsiteRequest
 } from '../../hooks/useApiClient';
+import LoadingButton from './LoadingButton';
+import PageTransition from './PageTransition';
+import AnimatedCard from './AnimatedCard';
+import Skeleton from './Skeleton';
 
 // Demo form component
 const GenerationDemo = () => {
@@ -71,24 +75,28 @@ const GenerationDemo = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* API Health Status */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">API Health Status</h2>
-        <div className="flex items-center space-x-3">
-          <div className={`w-3 h-3 rounded-full ${
-            isCheckingHealth ? 'bg-yellow-500 animate-pulse' :
-            isApiHealthy ? 'bg-green-500' : 'bg-red-500'
-          }`} />
-          <span className="text-sm">
-            {isCheckingHealth ? 'Checking...' :
-             isApiHealthy ? 'API is healthy' : 'API is unavailable'}
-          </span>
-        </div>
-      </div>
+    <PageTransition>
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
+        {/* API Health Status */}
+        <AnimatedCard className="bg-white rounded-lg shadow p-6 border border-gray-200" hover lift>
+          <h2 className="text-xl font-semibold mb-4">API Health Status</h2>
+          <div className="flex items-center space-x-3">
+            {isCheckingHealth ? (
+              <Skeleton variant="circular" width={12} height={12} />
+            ) : (
+              <div className={`w-3 h-3 rounded-full ${
+                isApiHealthy ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+            )}
+            <span className="text-sm">
+              {isCheckingHealth ? 'Checking...' :
+               isApiHealthy ? 'API is healthy' : 'API is unavailable'}
+            </span>
+          </div>
+        </AnimatedCard>
 
-      {/* Generation Form */}
-      <div className="bg-white rounded-lg shadow p-6">
+        {/* Generation Form */}
+        <AnimatedCard className="bg-white rounded-lg shadow p-6 border border-gray-200" hover lift>
         <h2 className="text-xl font-semibold mb-4">HTTP + TanStack Query Demo</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,32 +141,35 @@ const GenerationDemo = () => {
           </div>
 
           <div className="flex space-x-4">
-            <button
+            <LoadingButton
               type="submit"
-              disabled={isGenerating || !isApiHealthy}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={isGenerating}
+              disabled={!isApiHealthy}
+              loadingText="Generating..."
+              className="px-6 py-2"
             >
-              {isGenerating ? 'Generating...' : 'Generate Website'}
-            </button>
+              Generate Website
+            </LoadingButton>
 
             {(isGenerating || isCompleted || hasError) && (
-              <button
+              <LoadingButton
                 type="button"
                 onClick={statusData && !isCompleted ? cancelGeneration : handleReset}
-                disabled={isCancelling}
-                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50"
+                loading={isCancelling}
+                variant="secondary"
+                loadingText="Cancelling..."
+                className="px-6 py-2"
               >
-                {isCancelling ? 'Cancelling...' :
-                 statusData && !isCompleted ? 'Cancel' : 'Reset'}
-              </button>
+                {statusData && !isCompleted ? 'Cancel' : 'Reset'}
+              </LoadingButton>
             )}
           </div>
         </form>
-      </div>
+        </AnimatedCard>
 
-      {/* Status Display */}
-      {statusData && (
-        <div className="bg-white rounded-lg shadow p-6">
+        {/* Status Display */}
+        {statusData && (
+          <AnimatedCard className="bg-white rounded-lg shadow p-6 border border-gray-200" hover lift>
           <h2 className="text-xl font-semibold mb-4">Generation Status</h2>
 
           {/* Progress Bar */}
@@ -242,21 +253,21 @@ const GenerationDemo = () => {
               </a>
             </div>
           )}
-        </div>
-      )}
+          </AnimatedCard>
+        )}
 
-      {/* Error Display */}
-      {(generationError || statusError) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium">Error</h3>
-          <p className="text-red-700 mt-1">
-            {generationError?.message || statusError?.message || 'An unknown error occurred'}
-          </p>
-        </div>
-      )}
+        {/* Error Display */}
+        {(generationError || statusError) && (
+          <AnimatedCard className="bg-red-50 border border-red-200 rounded-lg p-4" hover>
+            <h3 className="text-red-800 font-medium">Error</h3>
+            <p className="text-red-700 mt-1">
+              {generationError?.message || statusError?.message || 'An unknown error occurred'}
+            </p>
+          </AnimatedCard>
+        )}
 
-      {/* Technical Notes */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        {/* Technical Notes */}
+        <AnimatedCard className="bg-blue-50 border border-blue-200 rounded-lg p-6" hover lift>
         <h3 className="text-blue-900 font-medium mb-2">Architecture Notes</h3>
         <ul className="text-blue-800 text-sm space-y-1">
           <li>• <strong>HTTP-Based:</strong> Uses REST API instead of WebSocket connections</li>
@@ -266,8 +277,9 @@ const GenerationDemo = () => {
           <li>• <strong>Error Handling:</strong> Automatic retry with exponential backoff</li>
           <li>• <strong>Real-time Feel:</strong> Polling creates smooth progress updates</li>
         </ul>
+        </AnimatedCard>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 
