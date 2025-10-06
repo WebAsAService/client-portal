@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { QueryProvider } from '../../providers/QueryProvider';
+import { ToastProvider, useToast } from '../../providers/ToastProvider';
 import {
   useApiHealth,
   useGenerationWorkflow,
@@ -16,6 +17,8 @@ import LoadingButton from './LoadingButton';
 import PageTransition from './PageTransition';
 import AnimatedCard from './AnimatedCard';
 import Skeleton from './Skeleton';
+import ErrorBoundary from './ErrorBoundary';
+import FieldError from './FieldError';
 
 // Demo form component
 const GenerationDemo = () => {
@@ -30,6 +33,8 @@ const GenerationDemo = () => {
     website: 'https://acme-consulting.com',
   });
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { data: isApiHealthy, isLoading: isCheckingHealth } = useApiHealth();
 
   const {
@@ -48,30 +53,89 @@ const GenerationDemo = () => {
   } = useGenerationWorkflow({
     onComplete: (data) => {
       console.log('Generation completed:', data);
-      alert(`🎉 Website generated successfully! Preview: ${data.previewUrl || 'Available soon'}`);
+      showSuccess(`🎉 Website generated successfully! ${data.previewUrl ? 'Preview is ready.' : 'Preview will be available soon.'}`);
     },
     onError: (error) => {
       console.error('Generation error:', error);
-      alert(`❌ Generation failed: ${error.message}`);
+      showError(`Generation failed: ${error.message}`, {
+        label: 'Retry',
+        onClick: () => {
+          reset();
+          showInfo('Please try submitting your request again.');
+        }
+      });
     }
   });
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.businessName?.trim()) {
+      errors.businessName = 'Business name is required';
+    }
+
+    if (!formData.email?.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.description?.trim()) {
+      errors.description = 'Business description is required';
+    }
+
+    if (!formData.industry?.trim()) {
+      errors.industry = 'Industry is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.businessName || !formData.email) {
-      alert('Please fill in required fields');
+    if (!isApiHealthy) {
+      showError('API is not available. Please check your connection and try again.');
       return;
     }
 
+    if (!validateForm()) {
+      showWarning('Please fix the form errors and try again.');
+      return;
+    }
+
+    showInfo('Starting website generation...');
     startGeneration(formData as GenerateWebsiteRequest);
   };
 
   const handleReset = () => {
     reset();
+    setFormErrors({});
     setFormData({
       ...formData,
     });
+    showInfo('Form has been reset. You can start over.');
+  };
+
+  // Add test buttons for demonstrating different toast types
+  const handleTestError = () => {
+    showError('This is a test error message with retry functionality.', {
+      label: 'Retry',
+      onClick: () => showInfo('Retry clicked!')
+    });
+  };
+
+  const handleTestSuccess = () => {
+    showSuccess('This is a test success message that will auto-dismiss.');
+  };
+
+  const handleTestWarning = () => {
+    showWarning('This is a test warning message with important information.');
+  };
+
+  const handleTestInfo = () => {
+    showInfo('This is a test info message to provide helpful context.');
   };
 
   return (
@@ -109,9 +173,14 @@ const GenerationDemo = () => {
                 type="text"
                 value={formData.businessName}
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  formErrors.businessName
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 required
               />
+              <FieldError message={formErrors.businessName} />
             </div>
 
             <div>
@@ -122,22 +191,32 @@ const GenerationDemo = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  formErrors.email
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 required
               />
+              <FieldError message={formErrors.email} />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+              Description *
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                formErrors.description
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-blue-500'
+              }`}
               rows={3}
             />
+            <FieldError message={formErrors.description} />
           </div>
 
           <div className="flex space-x-4">
@@ -165,6 +244,44 @@ const GenerationDemo = () => {
             )}
           </div>
         </form>
+        </AnimatedCard>
+
+        {/* Error Handling Demo */}
+        <AnimatedCard className="bg-white rounded-lg shadow p-6 border border-gray-200" hover lift>
+          <h2 className="text-xl font-semibold mb-4">Error Handling & User Feedback Demo</h2>
+          <p className="text-gray-600 mb-4">
+            Test different types of user feedback messages:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <LoadingButton
+              onClick={handleTestSuccess}
+              variant="primary"
+              size="small"
+            >
+              Test Success
+            </LoadingButton>
+            <LoadingButton
+              onClick={handleTestError}
+              variant="danger"
+              size="small"
+            >
+              Test Error
+            </LoadingButton>
+            <LoadingButton
+              onClick={handleTestWarning}
+              variant="secondary"
+              size="small"
+            >
+              Test Warning
+            </LoadingButton>
+            <LoadingButton
+              onClick={handleTestInfo}
+              variant="secondary"
+              size="small"
+            >
+              Test Info
+            </LoadingButton>
+          </div>
         </AnimatedCard>
 
         {/* Status Display */}
@@ -283,11 +400,15 @@ const GenerationDemo = () => {
   );
 };
 
-// Main component with provider
+// Main component with providers and error boundary
 export default function ApiDemo() {
   return (
-    <QueryProvider>
-      <GenerationDemo />
-    </QueryProvider>
+    <ErrorBoundary>
+      <QueryProvider>
+        <ToastProvider>
+          <GenerationDemo />
+        </ToastProvider>
+      </QueryProvider>
+    </ErrorBoundary>
   );
 }
