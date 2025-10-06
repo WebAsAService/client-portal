@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Upload, X, Check } from 'lucide-react';
 import ProgressTracker from './ProgressTracker';
+import LoadingButton from './LoadingButton';
 
 // TypeScript interfaces
 interface FormData {
@@ -508,17 +509,14 @@ export default function GeneratorForm() {
           Back
         </button>
 
-        <button
+        <LoadingButton
           onClick={handleNext}
-          disabled={isSubmitting}
-          className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          loading={isSubmitting}
+          loadingText="Generating..."
+          size="large"
+          className="px-6 py-3"
         >
-          {isSubmitting ? (
-            <div className="flex items-center">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Generating...
-            </div>
-          ) : isLastStep ? (
+          {isLastStep ? (
             <div className="flex items-center">
               <Check className="w-4 h-4 mr-2" />
               Generate Website
@@ -529,7 +527,7 @@ export default function GeneratorForm() {
               <ChevronRight className="w-4 h-4 ml-1" />
             </div>
           )}
-        </button>
+        </LoadingButton>
       </div>
     </div>
   );
