@@ -7,6 +7,8 @@
 
 import type { APIRoute } from 'astro';
 
+export const prerender = false;
+
 // Types for form data
 interface GenerateWebsiteRequest {
   businessName: string;

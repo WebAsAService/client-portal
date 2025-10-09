@@ -7,6 +7,8 @@
 
 import type { APIRoute } from 'astro';
 
+export const prerender = false;
+
 // Re-export the GET handler from the webhook endpoint
 // This allows for cleaner URLs like /api/status/client-123
 export const GET: APIRoute = async ({ params }) => {
@@ -23,7 +25,8 @@ export const GET: APIRoute = async ({ params }) => {
     }
 
     // Forward to the webhook handler's GET method
-    const url = new URL('/api/webhooks/github-status', import.meta.env.SITE);
+    const baseUrl = import.meta.env.SITE || 'http://localhost:4321';
+    const url = new URL('/api/webhooks/github-status', baseUrl);
     url.searchParams.set('clientId', clientId);
 
     // Create a new request to forward to the webhook handler

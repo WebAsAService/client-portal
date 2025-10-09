@@ -8,6 +8,8 @@
 import type { APIRoute } from 'astro';
 import crypto from 'crypto';
 
+export const prerender = false;
+
 // Types for status updates
 interface GitHubStatusUpdate {
   status: 'started' | 'logo_processed' | 'logo_skipped' | 'content_generated' | 'completed' | 'failed';
