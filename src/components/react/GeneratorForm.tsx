@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Upload, X, Check } from 'lucide-react';
 import ProgressTracker from './ProgressTracker';
 import LoadingButton from './LoadingButton';
+import { api } from '../../utils/api';
 
 // TypeScript interfaces
 interface FormData {
@@ -261,23 +262,38 @@ export default function GeneratorForm() {
     setIsSubmitting(true);
 
     try {
-      // Generate unique client ID for this generation session
-      const newClientId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // Transform form data to match API interface
+      const apiData = {
+        businessName: formData.service, // Use service as business name
+        description: formData.coreServices, // Use core services as description
+        industry: formData.industry,
+        services: formData.coreServices.split(',').map(s => s.trim()).filter(s => s), // Split services
+        targetAudience: formData.targetAudience,
+        email: formData.email,
+        phone: formData.phone,
+        domain: formData.domain,
+        logoUrl: '', // Will be handled in future with file upload
+      };
 
-      // Here you would typically send the data to your API
-      console.log('Form submitted:', formData);
-      console.log('Generated client ID:', newClientId);
+      console.log('Submitting to API:', apiData);
 
-      // Simulate API call to initiate generation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the real API
+      const response = await api.generateWebsite(apiData);
 
-      // Transition to progress tracking
-      setClientId(newClientId);
-      setIsGenerating(true);
+      console.log('API response:', response);
+
+      if (response.success) {
+        // Transition to progress tracking with the returned client ID
+        setClientId(response.clientId);
+        setIsGenerating(true);
+      } else {
+        throw new Error(response.message || 'Failed to start generation');
+      }
 
     } catch (error) {
       console.error('Submission error:', error);
-      alert('Something went wrong. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      alert(errorMessage);
       setIsSubmitting(false);
     }
   };

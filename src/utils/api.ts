@@ -5,8 +5,8 @@
  * Integrates with GitHub Actions workflow for website generation.
  */
 
-// API Configuration
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+// API Configuration - Use current site for Astro endpoints
+const API_BASE_URL = import.meta.env.SITE || 'http://localhost:4321';
 
 // Request Types
 export interface GenerateWebsiteRequest {
@@ -144,14 +144,23 @@ export const api = {
    */
   generateWebsite: async (data: GenerateWebsiteRequest): Promise<GenerateWebsiteResponse> => {
     try {
-      const formData = createFormData(data);
-
+      // Send JSON instead of FormData for Astro API route
       const response = await fetch(`${API_BASE_URL}/api/generate`, {
         method: 'POST',
-        body: formData,
         headers: {
-          // Don't set Content-Type header for FormData, let browser set it
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          businessName: data.businessName,
+          description: data.description,
+          industry: data.industry,
+          services: data.services,
+          targetAudience: data.targetAudience,
+          email: data.email,
+          phone: data.phone,
+          domain: data.website,
+          logoUrl: data.logoUrl,
+        }),
       });
 
       return handleResponse<GenerateWebsiteResponse>(response);
@@ -193,11 +202,12 @@ export const api = {
   },
 
   /**
-   * Health check to verify API connectivity
+   * Health check to verify API connectivity (simplified for Astro)
    */
   healthCheck: async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/health`, {
+      // Simple check - try to fetch the status endpoint without params
+      const response = await fetch(`${API_BASE_URL}/api/webhooks/github-status`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +216,8 @@ export const api = {
         signal: AbortSignal.timeout(5000),
       });
 
-      return response.ok;
+      // Any response (even 400) means the API is up
+      return response.status < 500;
     } catch (error) {
       console.warn('API health check failed:', error);
       return false;
