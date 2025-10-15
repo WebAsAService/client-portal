@@ -1,0 +1,407 @@
+name: Generate Client Site
+
+on:
+  workflow_dispatch:
+    inputs:
+      logo_url:
+        description: 'Logo URL (optional - if not provided, theme will be generated from business info)'
+        required: false
+        type: string
+        default: ''
+      business_name:
+        description: 'Business Name'
+        required: true
+        type: string
+      business_description:
+        description: 'Business Description'
+        required: false
+        type: string
+        default: ''
+      industry:
+        description: 'Industry/Business Type'
+        required: true
+        type: string
+        default: 'Technology'
+      target_audience:
+        description: 'Target Audience'
+        required: false
+        type: string
+        default: ''
+      services:
+        description: 'Main Services/Products (comma-separated)'
+        required: false
+        type: string
+        default: ''
+      contact_info:
+        description: 'Contact Info (format: email=test@example.com,phone=+1234567890 - email required, phone optional)'
+        required: true
+        type: string
+      website_domain:
+        description: 'Website Domain'
+        required: false
+        type: string
+        default: ''
+      client_name:
+        description: 'Client Name (for file paths, lowercase, no spaces)'
+        required: true
+        type: string
+      custom_colors:
+        description: 'Custom Colors (format: primary=#FF0000,secondary=#00FF00,accent=#0000FF - all optional)'
+        required: false
+        type: string
+        default: ''
+
+  # Support external API calls via repository dispatch
+  repository_dispatch:
+    types: [generate-client-site]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+  issues: write
+  repository-projects: write
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  STATUS_WEBHOOK_URL: ${{ secrets.STATUS_WEBHOOK_URL }}
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_url: ${{ steps.create_pr.outputs.pr_url }}
+      client_name: ${{ steps.setup.outputs.client_name }}
+      client_id: ${{ steps.setup.outputs.client_id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          yarn install
+          pip install anthropic pillow requests beautifulsoup4 aiohttp
+
+      - name: Setup inputs and send start webhook
+        id: setup
+        run: |
+          # Extract inputs from workflow_dispatch or repository_dispatch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "logo_url=${{ github.event.inputs.logo_url }}" >> $GITHUB_OUTPUT
+            echo "business_name=${{ github.event.inputs.business_name }}" >> $GITHUB_OUTPUT
+            echo "business_description=${{ github.event.inputs.business_description }}" >> $GITHUB_OUTPUT
+            echo "industry=${{ github.event.inputs.industry }}" >> $GITHUB_OUTPUT
+            echo "target_audience=${{ github.event.inputs.target_audience }}" >> $GITHUB_OUTPUT
+            echo "services=${{ github.event.inputs.services }}" >> $GITHUB_OUTPUT
+
+            # Parse contact info from consolidated field
+            CONTACT_INFO="${{ github.event.inputs.contact_info }}"
+
+            # Extract contact email and phone using parameter expansion
+            CONTACT_EMAIL=$(echo "$CONTACT_INFO" | sed -n 's/.*email=\([^,]*\).*/\1/p')
+            CONTACT_PHONE=$(echo "$CONTACT_INFO" | sed -n 's/.*phone=\([^,]*\).*/\1/p')
+
+            echo "contact_email=$CONTACT_EMAIL" >> $GITHUB_OUTPUT
+            echo "contact_phone=$CONTACT_PHONE" >> $GITHUB_OUTPUT
+            echo "website_domain=${{ github.event.inputs.website_domain }}" >> $GITHUB_OUTPUT
+            echo "client_name=${{ github.event.inputs.client_name }}" >> $GITHUB_OUTPUT
+
+            # Parse custom colors from consolidated field
+            CUSTOM_COLORS="${{ github.event.inputs.custom_colors }}"
+
+            # Extract individual colors using parameter expansion
+            PRIMARY_COLOR=$(echo "$CUSTOM_COLORS" | sed -n 's/.*primary=\([^,]*\).*/\1/p')
+            SECONDARY_COLOR=$(echo "$CUSTOM_COLORS" | sed -n 's/.*secondary=\([^,]*\).*/\1/p')
+            ACCENT_COLOR=$(echo "$CUSTOM_COLORS" | sed -n 's/.*accent=\([^,]*\).*/\1/p')
+
+            echo "primary_color=$PRIMARY_COLOR" >> $GITHUB_OUTPUT
+            echo "secondary_color=$SECONDARY_COLOR" >> $GITHUB_OUTPUT
+            echo "accent_color=$ACCENT_COLOR" >> $GITHUB_OUTPUT
+
+            # Generate client_id from business name for compatibility
+            CLIENT_ID=$(echo "${{ github.event.inputs.business_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')-$(date +%s)-$(openssl rand -hex 3)
+            echo "client_id=$CLIENT_ID" >> $GITHUB_OUTPUT
+          else
+            echo "logo_url=${{ github.event.client_payload.logoUrl }}" >> $GITHUB_OUTPUT
+            echo "business_name=${{ github.event.client_payload.businessName }}" >> $GITHUB_OUTPUT
+            echo "business_description=${{ github.event.client_payload.description }}" >> $GITHUB_OUTPUT
+            echo "industry=${{ github.event.client_payload.industry }}" >> $GITHUB_OUTPUT
+            echo "target_audience=${{ github.event.client_payload.targetAudience }}" >> $GITHUB_OUTPUT
+            echo "services=$(echo '${{ github.event.client_payload.services }}' | jq -r 'join(",")')" >> $GITHUB_OUTPUT
+            echo "contact_email=${{ github.event.client_payload.email }}" >> $GITHUB_OUTPUT
+            echo "contact_phone=${{ github.event.client_payload.phone }}" >> $GITHUB_OUTPUT
+            echo "website_domain=${{ github.event.client_payload.domain }}" >> $GITHUB_OUTPUT
+            echo "client_id=${{ github.event.client_payload.clientId }}" >> $GITHUB_OUTPUT
+
+            # Generate client_name from client_id for compatibility
+            CLIENT_NAME=$(echo "${{ github.event.client_payload.clientId }}" | cut -d'-' -f1-2)
+            echo "client_name=$CLIENT_NAME" >> $GITHUB_OUTPUT
+
+            # Extract colors (not implemented in client portal yet, but prepared)
+            echo "primary_color=" >> $GITHUB_OUTPUT
+            echo "secondary_color=" >> $GITHUB_OUTPUT
+            echo "accent_color=" >> $GITHUB_OUTPUT
+          fi
+
+          # Send start webhook with client_id
+          if [ -n "$STATUS_WEBHOOK_URL" ]; then
+            curl -X POST "$STATUS_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "status": "started",
+                "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                "message": "AI generation process initiated",
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+              }' || echo "Webhook failed, continuing..."
+          fi
+
+      - name: Create client branch
+        run: |
+          CLIENT_NAME="${{ steps.setup.outputs.client_name }}"
+          BRANCH_NAME="client/${CLIENT_NAME}-$(date +%Y%m%d-%H%M%S)"
+
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git checkout -b "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Download and process logo
+        id: process_logo
+        run: |
+          LOGO_URL="${{ steps.setup.outputs.logo_url }}"
+
+          if [ -n "$LOGO_URL" ] && [ "$LOGO_URL" != "" ]; then
+            echo "Processing logo from URL: $LOGO_URL"
+            node scripts/process-logo.js \
+              --logo-url "$LOGO_URL" \
+              --client-name "${{ steps.setup.outputs.client_name }}" \
+              --extract-colors "temp/extracted_colors.json"
+
+            # Send logo processed webhook with client_id
+            if [ -n "$STATUS_WEBHOOK_URL" ]; then
+              curl -X POST "$STATUS_WEBHOOK_URL" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "status": "logo_processed",
+                  "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                  "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                  "message": "Logo downloaded and optimized",
+                  "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+                }' || echo "Webhook failed, continuing..."
+            fi
+          else
+            echo "No logo URL provided, generating business-based theme colors"
+
+            # Create empty colors file for business-based generation
+            mkdir -p temp
+            echo '{"businessBased": true}' > temp/extracted_colors.json
+
+            # Send logo skipped webhook with client_id
+            if [ -n "$STATUS_WEBHOOK_URL" ]; then
+              curl -X POST "$STATUS_WEBHOOK_URL" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "status": "logo_skipped",
+                  "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                  "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                  "message": "Logo-less generation - using business-based colors",
+                  "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+                }' || echo "Webhook failed, continuing..."
+            fi
+          fi
+
+      - name: Generate AI content and theme
+        id: generate_ai
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python scripts/generate-theme.py \
+            --business-name "${{ steps.setup.outputs.business_name }}" \
+            --business-description "${{ steps.setup.outputs.business_description }}" \
+            --industry "${{ steps.setup.outputs.industry }}" \
+            --target-audience "${{ steps.setup.outputs.target_audience }}" \
+            --services "${{ steps.setup.outputs.services }}" \
+            --contact-email "${{ steps.setup.outputs.contact_email }}" \
+            --contact-phone "${{ steps.setup.outputs.contact_phone }}" \
+            --website-domain "${{ steps.setup.outputs.website_domain }}" \
+            --client-name "${{ steps.setup.outputs.client_name }}" \
+            --logo-colors "$(cat temp/extracted_colors.json)" \
+            --logo-path "public/images/clients/${{ steps.setup.outputs.client_name }}/logo.png" \
+            --primary-color "${{ steps.setup.outputs.primary_color }}" \
+            --secondary-color "${{ steps.setup.outputs.secondary_color }}" \
+            --accent-color "${{ steps.setup.outputs.accent_color }}"
+
+          # Send content generated webhook with client_id
+          if [ -n "$STATUS_WEBHOOK_URL" ]; then
+            curl -X POST "$STATUS_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "status": "content_generated",
+                "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                "message": "AI content and theme generated",
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+              }' || echo "Webhook failed, continuing..."
+          fi
+
+      - name: Create client page structure
+        run: |
+          CLIENT_NAME="${{ steps.setup.outputs.client_name }}"
+
+          # Create client page directory
+          mkdir -p "src/pages/clients/${CLIENT_NAME}"
+
+          # Create client page using generated config
+          node scripts/create-client-page.js \
+            --client-name "$CLIENT_NAME"
+
+      - name: Commit and push changes
+        run: |
+          # Show what files exist before adding
+          echo "=== Files in working directory ==="
+          find . -name "*.js" -o -name "*.astro" -o -name "*.css" -o -name "*.json" -o -name "*.md" -o -name "*.png" -o -name "*.webp" -o -name "*.ico" | grep -E "(src/|public/)" | sort
+
+          # Add all relevant files (excluding temp directory)
+          git add src/ public/
+
+          echo "=== Git status after adding ==="
+          git status
+
+          echo "=== Files staged for commit ==="
+          git diff --cached --name-only
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "feat: generate client site for ${{ steps.setup.outputs.client_name }}
+
+          - Add AI-generated client configuration
+          - Create custom theme with brand colors
+          - Process and optimize logo assets
+          - Generate personalized content and messaging
+
+          Generated with Claude API and GitHub Actions
+
+          Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git push origin "$branch_name"
+
+      - name: Create pull request
+        id: create_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create PR using GitHub CLI
+          PR_BODY="## 🎨 New Client Site Generated
+
+          **Client:** ${{ steps.setup.outputs.business_name }}
+          **Industry:** ${{ steps.setup.outputs.industry }}
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M UTC")
+
+          ### ✨ What's Generated
+
+          - **🎨 Custom Theme**: Brand colors extracted from logo
+          - **📝 Personalized Content**: AI-generated copy tailored to business
+          - **🖼️ Optimized Assets**: Logo processed in multiple formats
+          - **📱 Responsive Design**: Mobile-friendly layout
+          - **🔧 Configuration**: Complete client config in \`src/config/clients/${{ steps.setup.outputs.client_name }}.js\`
+
+          ### 📂 Files Added/Modified
+
+          - \`src/config/clients/${{ steps.setup.outputs.client_name }}.js\` - Client configuration
+          - \`src/styles/client-themes.css\` - Custom theme styles
+          - \`src/pages/clients/${{ steps.setup.outputs.client_name }}/index.astro\` - Client page
+          - \`public/images/clients/${{ steps.setup.outputs.client_name }}/\` - Logo assets
+
+          ### 🔗 Preview
+
+          After merging, the site will be available at:
+          \`https://yoursite.com/clients/${{ steps.setup.outputs.client_name }}/\`
+
+          ### 🤖 AI Generation Details
+
+          This client site was automatically generated using:
+          - Claude API for content generation
+          - Advanced color extraction from logo
+          - Industry-specific messaging and design patterns
+
+          ---
+
+          🤖 **Generated with [Claude Code](https://claude.ai/code)** and GitHub Actions"
+
+          # Create the PR
+          PR_URL=$(gh pr create \
+            --title "🚀 New client site: ${{ steps.setup.outputs.business_name }}" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "${{ env.branch_name }}" \
+            --label "client-generation,ai-generated,ready-for-review" \
+            --assignee "${{ github.actor }}")
+
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "Created PR: $PR_URL"
+
+      - name: Send completion webhook
+        if: success()
+        run: |
+          if [ -n "$STATUS_WEBHOOK_URL" ]; then
+            curl -X POST "$STATUS_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "status": "completed",
+                "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                "pr_url": "'"${{ steps.create_pr.outputs.pr_url }}"'",
+                "preview_url": "https://yoursite.com/clients/'"${{ steps.setup.outputs.client_name }}"'/",
+                "message": "Client site generated successfully",
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+              }' || echo "Webhook failed, but workflow completed successfully"
+          fi
+
+      - name: Send failure webhook
+        if: failure()
+        run: |
+          if [ -n "$STATUS_WEBHOOK_URL" ]; then
+            curl -X POST "$STATUS_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "status": "failed",
+                "client_id": "'"${{ steps.setup.outputs.client_id }}"'",
+                "client_name": "'"${{ steps.setup.outputs.business_name }}"'",
+                "error": "Workflow failed - check GitHub Actions logs",
+                "message": "Client site generation failed",
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+              }' || echo "Webhook failed"
+          fi
+
+  # Cleanup job to remove temporary files
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: generate
+    if: always()
+    steps:
+      - name: Cleanup temporary files
+        run: |
+          echo "Cleaning up temporary files and caches..."
+          # This job ensures temporary files don't accumulate
