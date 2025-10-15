@@ -194,8 +194,11 @@ curl http://YOUR_TAILSCALE_IP:4321/health
 For GitHub webhooks, you need HTTPS. Tailscale provides this easily:
 
 ```bash
-# Enable Tailscale Serve for HTTPS
-tailscale serve https:443 http://localhost:4321
+# Enable Tailscale Serve for HTTPS (correct syntax)
+tailscale serve 443 http://localhost:4321
+
+# Alternative syntax (if above doesn't work)
+tailscale serve https / http://localhost:4321
 
 # Your app is now available at:
 # https://YOUR-MACHINE-NAME.YOUR-TAILNET.ts.net
@@ -218,7 +221,7 @@ tailscale status
 npm run dev
 
 # Terminal 2: Enable Tailscale HTTPS serving
-tailscale serve https:443 http://localhost:4321
+tailscale serve 443 http://localhost:4321
 ```
 
 #### 2. Get Your Webhook URL
@@ -255,7 +258,7 @@ curl -X POST "https://your-machine.your-tailnet.ts.net/api/webhooks/github-statu
 1. **Start Local Environment**:
    ```bash
    npm run dev  # Terminal 1
-   tailscale serve https:443 http://localhost:4321  # Terminal 2
+   tailscale serve 443 http://localhost:4321  # Terminal 2
    ```
 
 2. **Update Repository Secret** with your Tailscale HTTPS URL
@@ -278,8 +281,28 @@ curl -X POST "https://your-machine.your-tailnet.ts.net/api/webhooks/github-statu
 
 #### Common Issues
 - **Connection Refused**: Ensure Tailscale serve is running and pointing to correct port
-- **HTTPS Required**: Always use `tailscale serve https:443` for GitHub webhooks
+- **Invalid Argument Format**: Try different syntax options (see below)
+- **HTTPS Required**: Always use Tailscale serve for GitHub webhooks
 - **Machine Name Changes**: Use IP address if machine name is unstable
+
+#### Tailscale Serve Syntax Variations
+Different Tailscale versions may use different syntax:
+
+```bash
+# Option 1: Port-based (most common)
+tailscale serve 443 http://localhost:4321
+
+# Option 2: Path-based
+tailscale serve https / http://localhost:4321
+
+# Option 3: Full URL (older versions)
+tailscale serve https://0.0.0.0:443 http://localhost:4321
+
+# Option 4: Explicit port binding
+tailscale serve --https=443 http://localhost:4321
+```
+
+**Try these in order until one works for your Tailscale version.**
 
 #### Debug Commands
 ```bash
@@ -309,7 +332,7 @@ curl -X POST "https://your-machine.your-tailnet.ts.net/api/webhooks/github-statu
 tailscale serve reset
 
 # Start serving again
-tailscale serve https:443 http://localhost:4321
+tailscale serve 443 http://localhost:4321
 ```
 
 ### Comparison: ngrok vs Tailscale
