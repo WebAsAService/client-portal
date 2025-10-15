@@ -12,6 +12,18 @@ export default defineConfig({
   integrations: [react()],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    server: {
+      host: true, // Allow external connections
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        '.ts.net', // Allow all Tailscale domains
+        '.tailscale.io', // Alternative Tailscale domains
+        '.ngrok.io', // Also support ngrok domains
+        '.ngrok.app', // New ngrok domains
+        '.ngrok-free.app' // Free ngrok domains
+      ]
+    }
   }
 });

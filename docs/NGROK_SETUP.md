@@ -304,6 +304,33 @@ tailscale serve --https=443 http://localhost:4321
 
 **Try these in order until one works for your Tailscale version.**
 
+#### Vite Host Configuration
+If you get a "Blocked request" error about allowed hosts, you need to configure Vite to allow your Tailscale domain.
+
+Add this to your `astro.config.mjs`:
+```javascript
+export default defineConfig({
+  // ... other config
+  vite: {
+    plugins: [tailwindcss()],
+    server: {
+      host: true, // Allow external connections
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        '.ts.net', // Allow all Tailscale domains
+        '.tailscale.io', // Alternative Tailscale domains
+        '.ngrok.io', // Also support ngrok domains
+        '.ngrok.app', // New ngrok domains
+        '.ngrok-free.app' // Free ngrok domains
+      ]
+    }
+  }
+});
+```
+
+**After updating the config, restart your dev server**: `npm run dev`
+
 #### Debug Commands
 ```bash
 # Check Tailscale status
