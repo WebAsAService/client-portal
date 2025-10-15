@@ -16,11 +16,11 @@ Complete setup and configuration guides for the Webler Client Portal direct GitH
 - Security considerations
 - Testing and troubleshooting
 
-### 🚇 [Development Testing with ngrok](./NGROK_SETUP.md)
-- Local webhook testing setup
-- ngrok installation and configuration
-- Development workflow
-- Debugging and troubleshooting
+### 🚇 [Development Testing with ngrok & Tailscale](./NGROK_SETUP.md)
+- Local webhook testing setup (ngrok or Tailscale)
+- Installation and configuration for both options
+- Development workflow and debugging
+- Comparison guide and recommendations
 
 ### 🚀 [Production Deployment](./PRODUCTION_DEPLOYMENT.md)
 - Platform-specific configurations (Vercel, Netlify, Railway)
