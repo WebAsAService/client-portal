@@ -184,15 +184,17 @@ Update `astro.config.mjs`:
 ```javascript
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
+import netlify from '@astrojs/netlify'; // or vercel(), node()
 
 export default defineConfig({
-  integrations: [react(), tailwind()],
-  output: 'hybrid', // Mix of static and server-rendered
-  adapter: vercel(), // or netlify(), node()
+  output: 'server', // Server-side rendering for API routes
+  adapter: netlify(), // Required for server-rendered pages
+  integrations: [react()],
 
-  // Performance optimizations
   vite: {
+    plugins: [tailwindcss()],
+    // Performance optimizations
     build: {
       rollupOptions: {
         output: {
@@ -206,6 +208,20 @@ export default defineConfig({
   }
 });
 ```
+
+**Required Dependencies:**
+```bash
+# For Netlify (current setup)
+npm install @astrojs/netlify
+
+# For Vercel
+npm install @astrojs/vercel
+
+# For Node.js/Railway
+npm install @astrojs/node
+```
+
+**Important**: The `output: 'server'` mode is required because we use server-rendered API routes with `export const prerender = false;`.
 
 ### 2. Caching Strategy
 ```javascript
