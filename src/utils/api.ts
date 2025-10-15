@@ -5,8 +5,8 @@
  * Integrates with GitHub Actions workflow for website generation.
  */
 
-// API Configuration - Use current site for Astro endpoints
-const API_BASE_URL = import.meta.env.SITE || 'http://localhost:4321';
+// API Configuration - Use PUBLIC_API_URL for consistent API endpoint
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL || import.meta.env.SITE || window?.location?.origin || 'http://localhost:4321';
 
 // Request Types
 export interface GenerateWebsiteRequest {

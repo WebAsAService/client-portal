@@ -57,6 +57,14 @@ const validateFormData = (data: any): string[] => {
   return errors;
 };
 
+// CORS headers for all responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json'
+};
+
 // Transform form data for GitHub workflow
 const transformForGitHub = (data: GenerateWebsiteRequest, clientId: string) => {
   return {
@@ -88,7 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
         details: validationErrors
       }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: corsHeaders
       });
     }
 
@@ -130,7 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
         details: `GitHub API returned ${githubResponse.status}: ${githubResponse.statusText}`
       }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: corsHeaders
       });
     }
 
@@ -143,7 +151,7 @@ export const POST: APIRoute = async ({ request }) => {
       statusUrl: `/api/status/${clientId}`
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: corsHeaders
     });
 
   } catch (error) {
@@ -155,7 +163,7 @@ export const POST: APIRoute = async ({ request }) => {
       details: error instanceof Error ? error.message : 'Unknown error occurred'
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: corsHeaders
     });
   }
 };
@@ -164,10 +172,6 @@ export const POST: APIRoute = async ({ request }) => {
 export const OPTIONS: APIRoute = async () => {
   return new Response(null, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    headers: corsHeaders
   });
 };

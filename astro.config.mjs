@@ -7,6 +7,7 @@ import netlify from '@astrojs/netlify';
 
 // https://astro.build/config
 export default defineConfig({
+  site: process.env.DEPLOY_PRIME_URL || process.env.URL || 'http://localhost:4321',
   output: 'server', // Server-side rendering for API routes
   adapter: netlify(),
   integrations: [react()],
