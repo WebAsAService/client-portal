@@ -6,6 +6,10 @@
  */
 
 import type { APIRoute } from 'astro';
+import { config } from 'dotenv';
+
+// Load environment variables
+config();
 
 export const prerender = false;
 
@@ -65,7 +69,7 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-// Transform form data for GitHub workflow
+// Transform form data for GitHub workflow (max 10 properties for GitHub API)
 const transformForGitHub = (data: GenerateWebsiteRequest, clientId: string) => {
   return {
     business_name: data.businessName,
@@ -74,18 +78,44 @@ const transformForGitHub = (data: GenerateWebsiteRequest, clientId: string) => {
     target_audience: data.targetAudience || '',
     services: data.services.join(','),
     contact_info: `email=${data.email}${data.phone ? `,phone=${data.phone}` : ''}`,
-    website_domain: data.domain || '',
     client_name: clientId,
-    logo_url: data.logoUrl || '',
-    custom_colors: '', // Will be extracted from logo if provided
+    metadata: JSON.stringify({
+      website_domain: data.domain || '',
+      logo_url: data.logoUrl || '',
+      custom_colors: ''
+    }),
     webhook_url: `${import.meta.env.SITE}/api/webhooks/github-status`
   };
 };
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    console.log('=== API Generate - Starting ===');
+
+    // Get GitHub token from environment variables
+    const githubToken = process.env.GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN;
+    console.log('GitHub Token available:', !!githubToken);
+    console.log('GitHub Token length:', githubToken?.length || 0);
+
+    if (!githubToken) {
+      console.error('GitHub token not found in environment variables');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'GitHub token configuration missing',
+        details: 'Server configuration error - GitHub token not available'
+      }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+
     // Parse request body
     const formData: GenerateWebsiteRequest = await request.json();
+    console.log('Form data received:', {
+      businessName: formData.businessName,
+      email: formData.email,
+      servicesCount: formData.services?.length
+    });
 
     // Validate form data
     const validationErrors = validateFormData(formData);
@@ -105,14 +135,21 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Transform data for GitHub workflow
     const workflowPayload = transformForGitHub(formData, clientId);
+    console.log('Workflow payload prepared:', {
+      client_name: workflowPayload.client_name,
+      business_name: workflowPayload.business_name
+    });
 
     // Trigger GitHub workflow via repository dispatch
+    console.log('About to make GitHub API call...');
+    console.log('Using token:', githubToken.substring(0, 10) + '...');
+
     const githubResponse = await fetch(
       'https://api.github.com/repos/WebAsAService/base-template/dispatches',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.GITHUB_TOKEN}`,
+          'Authorization': `Bearer ${githubToken}`,
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
           'User-Agent': 'Webler-Client-Portal/1.0'
@@ -123,6 +160,12 @@ export const POST: APIRoute = async ({ request }) => {
         })
       }
     );
+
+    console.log('GitHub API response received:', {
+      status: githubResponse.status,
+      statusText: githubResponse.statusText,
+      ok: githubResponse.ok
+    });
 
     if (!githubResponse.ok) {
       const errorText = await githubResponse.text();
