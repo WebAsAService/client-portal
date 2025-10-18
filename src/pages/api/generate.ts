@@ -71,6 +71,14 @@ const corsHeaders = {
 
 // Transform form data for GitHub workflow (max 10 properties for GitHub API)
 const transformForGitHub = (data: GenerateWebsiteRequest, clientId: string) => {
+  // Priority: DEV_WEBHOOK_URL > Tailscale for dev > SITE for production
+  const devWebhookUrl = process.env.DEV_WEBHOOK_URL || import.meta.env.DEV_WEBHOOK_URL;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const webhookBaseUrl = devWebhookUrl || (isDev
+    ? 'https://jonass-macbook-air.tailafba03.ts.net'
+    : import.meta.env.SITE);
+
   return {
     business_name: data.businessName,
     business_description: data.description || '',
@@ -84,7 +92,7 @@ const transformForGitHub = (data: GenerateWebsiteRequest, clientId: string) => {
       logo_url: data.logoUrl || '',
       custom_colors: ''
     }),
-    webhook_url: `${import.meta.env.SITE}/api/webhooks/github-status`
+    webhook_url: `${webhookBaseUrl}/api/webhooks/github-status`
   };
 };
 
